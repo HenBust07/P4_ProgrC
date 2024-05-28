@@ -12,10 +12,10 @@
 #define SW3 4
 #define SW4 5
 
-/*extern "C"{
+extern "C"{
     #include "leds.h"
     #include "pulsantes.h"
-}*/
+}
 
 //Variables para los retardos no bloqueantes
 int interval; //microsegundos
@@ -44,64 +44,6 @@ int sw4val;
 
 int swSelec; //Sw seleccionado para evitar el doble accionar de dos o más pulsantes
 int secuenciaSelec;
-
-bool encenderLed(int16_t led){
-	switch(led){
-  case LED_YELLOW:
-        digitalWrite(led, HIGH);
-        break;
-	case LED_RED:
-        digitalWrite(led, HIGH);
-        break;
-	case LED_GREEN:
-        digitalWrite(led, HIGH);
-        break;
-	case LED_BLUE:
-		digitalWrite(led, HIGH);
-        break;
-  default:
-        return false;
-    }
-    return true;
-}
-
-bool apagarLed(){
-	digitalWrite(LED_BLUE, LOW);
-    digitalWrite(LED_GREEN, LOW);
-    digitalWrite(LED_RED, LOW);
-    digitalWrite(LED_YELLOW, LOW);
-    return true;
-}
-
-bool leerTecla(int16_t tecla, const char* nombreTecla){
-    bool val = !digitalRead(tecla);
-    bool val2 = 0;
-    if (val != val2){
-    Serial.print(nombreTecla);
-    Serial.print(": ");
-    Serial.println(val);
-    val2 = val;
-    }
-    return val;
-}
-
-int prioridad(int16_t tecla1,int16_t tecla2,int16_t tecla3,int16_t tecla4){
-  int SW;
-  if (tecla2 == 1){
-      SW = 1;
-  } else if (tecla1 == 1){
-      SW = 0;
-  } else if (tecla3 == 1){
-      SW = 2;
-  } else if (tecla4 == 1){
-      SW = 3;
-  } else{
-      SW = 8;
-  }
-  return SW;
-}
-
-
 
 void setup(){
     Serial.begin(115200);
@@ -170,8 +112,7 @@ void loop(){
         
         //prioridad
         swSelec = prioridad(sw1val,sw2val,sw3val,sw4val);
-      
-
+        
         switch(swSelec){
           case 0: // Sentido inverso
             Serial.println("Pulsante seleccionado SW1");
@@ -194,8 +135,6 @@ void loop(){
           default:
               break;
         }
-        
-
         prevCount = currCount;
          
     }
