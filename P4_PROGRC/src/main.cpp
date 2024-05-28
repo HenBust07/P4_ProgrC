@@ -30,8 +30,11 @@ bool flag;
 
 int seq;
 typedef int gpioMap_t;
-const gpioMap_t secuencia[] = {LED_GREEN, LED_YELLOW, LED_RED, LED_BLUE};
+const gpioMap_t secuencia[] = {LED_GREEN, LED_YELLOW, LED_RED};
 const uint8_t ultimoLed = sizeof(secuencia)/sizeof(gpioMap_t);
+typedef int gpioMap_t2;
+const gpioMap_t2 secuencia2[] = {LED_BLUE};
+const uint8_t ultimoLed2 = sizeof(secuencia2)/sizeof(gpioMap_t2);
 int currSeq;
 
 int sw1val;
@@ -134,7 +137,9 @@ void loop(){
             flag = false;
             apagarLed();
             int led = secuencia[currSeq];
+            int led2 = secuencia2[currSeq];
             encenderLed(led);
+            encenderLed(led2);
             if (secuenciaSelec == 2){
               currSeq++;
             } else if (secuenciaSelec == 1){
