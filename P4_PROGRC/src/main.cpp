@@ -1,11 +1,12 @@
 #include <Arduino.h>
 #include <stdint.h>
 
+//Definicion de los puertos y nombres de LEDS
 #define LED_GREEN 11
 #define LED_YELLOW 10
 #define LED_RED 9
 #define LED_BLUE 8
-
+//Definicion de los puertos y nombres de pulsantes
 #define SW1 2
 #define SW2 3
 #define SW3 4
@@ -16,21 +17,21 @@
     #include "pulsantes.h"
 }*/
 
+//Variables para los retardos no bloqueantes
 int interval; //microsegundos
 int prevCount;
 int currCount;
 
+//Variables para el tiempo de encendido de los LEDS
 int ton; 
 int tcurr;
 
 bool flag;
 
 int seq;
-
 typedef int gpioMap_t;
 const gpioMap_t secuencia[] = {LED_GREEN, LED_YELLOW, LED_RED, LED_BLUE};
 const uint8_t ultimoLed = sizeof(secuencia)/sizeof(gpioMap_t);
-
 int currSeq;
 
 int sw1val;
@@ -39,6 +40,7 @@ int sw3val;
 int sw4val;
 
 int swSelec; //Sw seleccionado para evitar el doble accionar de dos o más pulsantes
+int secuenciaSelec;
 
 bool encenderLed(int16_t led){
 	switch(led){
@@ -65,6 +67,7 @@ bool apagarLed(){
     digitalWrite(LED_GREEN, LOW);
     digitalWrite(LED_RED, LOW);
     digitalWrite(LED_YELLOW, LOW);
+    return true;
 }
 
 bool leerTecla(int16_t tecla, const char* nombreTecla){
@@ -113,11 +116,13 @@ void setup(){
     prevCount = 0;
     currCount = 0;
 
-    ton = 25;
+    ton = 50; //tiempo por defecto
     tcurr = ton;
 
     flag = 0;
     //sw2val2 = 0;
+    secuenciaSelec = 2;
+
 }
 
 void loop(){
@@ -130,21 +135,28 @@ void loop(){
             apagarLed();
             int led = secuencia[currSeq];
             encenderLed(led);
-            currSeq++;
+            if (secuenciaSelec == 2){
+              currSeq++;
+            } else if (secuenciaSelec == 1){
+              currSeq--;
+            }
             
         }else{
            // apagarLed() ; //apagatodos los leds
         }
-        if (tcurr == ton){
+        if (tcurr >= ton){
             tcurr = 0;
             flag = true;
         }else{
             tcurr++;
         }
-        if (currSeq >= ultimoLed){
+        if ((currSeq >= ultimoLed)&&(secuenciaSelec == 2)){
             currSeq = 0;
         }
         
+        if ((currSeq < 0)&&(secuenciaSelec == 1)){
+            currSeq = ultimoLed;
+        }
         
          sw1val = leerTecla(SW1, "SW1");
          sw2val = leerTecla(SW2, "SW2");
@@ -156,23 +168,28 @@ void loop(){
       
 
         switch(swSelec){
-          case 0:
+          case 0: // Sentido inverso
             Serial.println("Pulsante seleccionado SW1");
+            secuenciaSelec = 1;
+
             break;
-          case 1:
+          case 1: //Original
             Serial.println("Pulsante seleccionado SW2");
+            secuenciaSelec = 2;
             break;
-          case 2:
+          case 2: //200ms
             Serial.println("Pulsante seleccionado SW3");
+            ton = 20;
             break;
-          case 3:
+          case 3: //750ms
             Serial.println("Pulsante seleccionado SW4");
+            ton = 75;
             
             break;
           default:
               break;
         }
-
+        
 
         prevCount = currCount;
          
