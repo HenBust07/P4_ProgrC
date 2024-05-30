@@ -1,17 +1,6 @@
 #include <Arduino.h>
 #include <stdint.h>
-
-//Definicion de los puertos y nombres de LEDS
-#define LED_GREEN 11
-#define LED_YELLOW 10
-#define LED_RED 9
-#define LED_BLUE 8
-//Definicion de los puertos y nombres de pulsantes
-#define SW1 2
-#define SW2 3
-#define SW3 4
-#define SW4 5
-
+ //Modularización
 extern "C"{
     #include "leds.h"
     #include "pulsantes.h"
@@ -25,86 +14,104 @@ int currCount;
 //Variables para el tiempo de encendido de los LEDS
 int ton; 
 int tcurr;
-
+//Indicador booleano para condicionales
 bool flag;
+//para la o las secuencias
+typedef int gpioMap_t; //definimos un tipo de dato
+const gpioMap_t secuencia[] = {LED_GREEN, LED_YELLOW, LED_RED}; //mediante esta estructura definimos la sec1
+const uint8_t primerLed = secuencia[0]; //obtenemos la longitud de la estructura 1
+const uint8_t ultimoLed = sizeof(secuencia)/sizeof(gpioMap_t); //obtenemos la longitud de la estructura 1
+typedef int gpioMap_t2; //definimos un tipo de dato
+const gpioMap_t2 secuencia2[] = {LED_BLUE};//mediante esta estructura definimos la sec2
+const uint8_t primerLed2 = secuencia2[0]; //obtenemos la longitud de la estructura 1
+const uint8_t ultimoLed2 = sizeof(secuencia2)/sizeof(gpioMap_t2); //obtenemos la longitud de la estructura 2
+int currSeq; //Variable para saber en que posición de la secuencia nos encontramos
+//punteros
+int * led; 
+int *ultimo;
+int *primero;
 
-int seq;
-typedef int gpioMap_t;
-const gpioMap_t secuencia[] = {LED_GREEN, LED_YELLOW, LED_RED};
-const uint8_t ultimoLed = sizeof(secuencia)/sizeof(gpioMap_t);
-typedef int gpioMap_t2;
-const gpioMap_t2 secuencia2[] = {LED_BLUE};
-const uint8_t ultimoLed2 = sizeof(secuencia2)/sizeof(gpioMap_t2);
-int currSeq;
 
+//para leer los valores de los switch
 int sw1val;
 int sw2val;
 int sw3val;
 int sw4val;
-
 int swSelec; //Sw seleccionado para evitar el doble accionar de dos o más pulsantes
-int secuenciaSelec;
+int secuenciaSelec; //Se guarda la elección entre el sw1 y sw2 para saber que secuencia mostrar
+
+
 
 void setup(){
     Serial.begin(115200);
+    //declaración de entradas y salidas
     pinMode(SW1, INPUT_PULLUP);
     pinMode(SW2, INPUT_PULLUP);
     pinMode(SW3, INPUT_PULLUP);
     pinMode(SW4, INPUT_PULLUP);
-
 	  pinMode(LED_YELLOW, OUTPUT);
     pinMode(LED_GREEN, OUTPUT);
     pinMode(LED_RED, OUTPUT);
     pinMode(LED_BLUE, OUTPUT);
-
+    //inicialización de variables
     interval = 10000;
     prevCount = 0;
     currCount = 0;
-
     ton = 50; //tiempo por defecto
     tcurr = ton;
-
     flag = 0;
     //sw2val2 = 0;
     secuenciaSelec = 2;
-
+    //inicializamos punteros
+    led = secuencia;
+    ultimo = secuencia[ultimoLed];
+    primero = primerLed;
 }
 
-void loop(){
-  
+void loop(){ 
     
     currCount = micros();
     if ((currCount -prevCount) >= interval){
-        if(flag == true ){
+        if(flag == true ){ //indicamos el encendido y apagado de cada led para la percepción de las secuencias
             flag = false;
-            apagarLed();
-            int led = secuencia[currSeq];
-            int led2 = secuencia2[currSeq];
-            encenderLed(led);
+            apagarLed(); //apagamos leds que no corresponden al estado 
+            //int led = secuencia[currSeq]; //obtenemos un dato a la vez de la secuencia1
+            int led2 = secuencia2[currSeq]; //lo mismo en la secuencia 2
+            //encendemos los leds que corresponden al estado actual
+            encenderLed(*led); 
             encenderLed(led2);
-            if (secuenciaSelec == 2){
-              currSeq++;
-            } else if (secuenciaSelec == 1){
-              currSeq--;
+            //avanzamos en la estructura de las secuencias
+            if (secuenciaSelec == 2){ //sentido original
+              //currSeq++;
+              led++;
+            } else if (secuenciaSelec == 1){ //sentido inverso
+              //currSeq--;
+              led--;
             }
             
         }else{
            // apagarLed() ; //apagatodos los leds
         }
+        //controlamos los tiempos en que permanecen encendidos los leds
         if (tcurr >= ton){
             tcurr = 0;
             flag = true;
         }else{
             tcurr++;
         }
-        if ((currSeq >= ultimoLed)&&(secuenciaSelec == 2)){
+        // para en el sentido original, evitar desbordamiento
+        /*if ((currSeq >= ultimoLed)&&(secuenciaSelec == 2)){
             currSeq = 0;
+        }*/
+        if ((led == &secuencia[ultimoLed])&&(secuenciaSelec == 2)){
+            led = secuencia;
         }
-        
-        if ((currSeq < 0)&&(secuenciaSelec == 1)){
-            currSeq = ultimoLed;
+
+        // para el sentido inverso, evitar desbordamiento
+        if ((led < &secuencia[0])&&(secuenciaSelec == 1)){
+            led = &secuencia[ultimoLed];
         }
-        
+        //leemos los valores de los pulsantes
          sw1val = leerTecla(SW1, "SW1");
          sw2val = leerTecla(SW2, "SW2");
          sw3val = leerTecla(SW3, "SW3");
@@ -112,7 +119,7 @@ void loop(){
         
         //prioridad
         swSelec = prioridad(sw1val,sw2val,sw3val,sw4val);
-        
+
         switch(swSelec){
           case 0: // Sentido inverso
             Serial.println("Pulsante seleccionado SW1");
@@ -135,7 +142,7 @@ void loop(){
           default:
               break;
         }
-        prevCount = currCount;
+        prevCount = currCount; //igualamos el tiempo previo con el actual para seguir con el siguiente intervalo
          
     }
    

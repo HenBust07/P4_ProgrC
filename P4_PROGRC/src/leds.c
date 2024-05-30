@@ -1,9 +1,4 @@
-#include <Arduino.h>
-#include <stdint.h>
-#define LED_GREEN 11
-#define LED_YELLOW 10
-#define LED_RED 9
-#define LED_BLUE 8
+#include "leds.h"
 int encenderLed(int16_t led){
 	switch(led){
   case LED_YELLOW:

@@ -1,5 +1,4 @@
-#include <Arduino.h>
-#include <stdint.h>
+#include "pulsantes.h"
 
 int leerTecla(int16_t tecla, const char* nombreTecla){
     int val = !digitalRead(tecla);
