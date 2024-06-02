@@ -3,7 +3,7 @@ Descripción del proyecto:
   Se usa funciones, punteros, modularización procurando llevar una programación ordenada. 
 
 Integrantes:
-  Henry Bustamante
-  José Nivicela
+  Henry Bustamante; 
+  José Nivicela . 
 
   
