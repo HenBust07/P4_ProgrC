@@ -4,6 +4,7 @@
 extern "C"{
     #include "leds.h"
     #include "pulsantes.h"
+    #include "contadores.h"
 }
 
 //Variables para los retardos no bloqueantes
@@ -48,21 +49,6 @@ int sw3val;
 int sw4val;
 int swSelec; //Sw seleccionado para evitar el doble accionar de dos o más pulsantes
 int secuenciaSelec; //Se guarda la elección entre el sw1 y sw2 para saber que secuencia mostrar
-
-int Curr(int CurrSequence, uint8_t ultimaPosicion,int secuenciaSeleccionada){
-   // para en el sentido original, evitar desbordamiento
-        if ((CurrSequence >= ultimaPosicion)&&(secuenciaSeleccionada == 2)){
-            CurrSequence = 0;
-        }
-        // para el sentido inverso, evitar desbordamiento
-        if ((CurrSequence < 0)&&(secuenciaSeleccionada == 1)){
-            CurrSequence = ultimaPosicion;
-        }
-
-      
-  return CurrSequence;
-}
-
 
 void setup(){
     Serial.begin(115200);
