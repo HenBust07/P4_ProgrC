@@ -18,19 +18,28 @@ int tcurr;
 bool flag;
 //para la o las secuencias
 typedef int gpioMap_t; //definimos un tipo de dato
-const gpioMap_t secuencia[] = {LED_GREEN, LED_YELLOW, LED_RED}; //mediante esta estructura definimos la sec1
-const uint8_t primerLed = secuencia[0]; //obtenemos la longitud de la estructura 1
-const uint8_t ultimoLed = sizeof(secuencia)/sizeof(gpioMap_t); //obtenemos la longitud de la estructura 1
-typedef int gpioMap_t2; //definimos un tipo de dato
-const gpioMap_t2 secuencia2[] = {LED_BLUE};//mediante esta estructura definimos la sec2
-const uint8_t primerLed2 = secuencia2[0]; //obtenemos la longitud de la estructura 1
-const uint8_t ultimoLed2 = sizeof(secuencia2)/sizeof(gpioMap_t2); //obtenemos la longitud de la estructura 2
-int currSeq; //Variable para saber en que posición de la secuencia nos encontramos
-//punteros
-int * led; 
-int *ultimo;
-int *primero;
+// Definimos una estructura que contiene el arreglo secuencia
+typedef struct {
+    const gpioMap_t* leds;
+    const uint8_t size;
+} LedSequence;
 
+// Creamos e inicializamos la estructura de la secuencia 1
+gpioMap_t secuenciaArray1[] = {LED_BLUE, LED_GREEN};
+LedSequence secuencia1 = {secuenciaArray1, sizeof(secuenciaArray1) / sizeof(gpioMap_t)};
+// Utilizamos punteros para obtener el primer y último LED
+const gpioMap_t* primerLed1 = secuencia1.leds; // Puntero al primer LED
+const uint8_t ultimoLed1 = secuencia1.size;    // Tamaño del arreglo
+// Creamos e inicializamos la estructura de la secuencia 2
+
+gpioMap_t secuenciaArray2[] = {LED_YELLOW, LED_RED, LED_BLUE};
+LedSequence secuencia2 = {secuenciaArray2, sizeof(secuenciaArray2) / sizeof(gpioMap_t)};
+// Utilizamos punteros para obtener el primer y último LED
+const gpioMap_t* primerLed2 = secuencia2.leds; // Puntero al primer LED
+const uint8_t ultimoLed2 = secuencia2.size;    // Tamaño del arreglo
+//Contadores
+int currSeq; //Variable para saber en que posición de la secuencia nos encontramos
+int currSeq2; //Variable para saber en que posición de la secuencia nos encontramos
 
 //para leer los valores de los switch
 int sw1val;
@@ -40,6 +49,19 @@ int sw4val;
 int swSelec; //Sw seleccionado para evitar el doble accionar de dos o más pulsantes
 int secuenciaSelec; //Se guarda la elección entre el sw1 y sw2 para saber que secuencia mostrar
 
+int Curr(int CurrSequence, uint8_t ultimaPosicion,int secuenciaSeleccionada){
+   // para en el sentido original, evitar desbordamiento
+        if ((CurrSequence >= ultimaPosicion)&&(secuenciaSeleccionada == 2)){
+            CurrSequence = 0;
+        }
+        // para el sentido inverso, evitar desbordamiento
+        if ((CurrSequence < 0)&&(secuenciaSeleccionada == 1)){
+            CurrSequence = ultimaPosicion;
+        }
+
+      
+  return CurrSequence;
+}
 
 
 void setup(){
@@ -60,90 +82,71 @@ void setup(){
     ton = 50; //tiempo por defecto
     tcurr = ton;
     flag = 0;
-    //sw2val2 = 0;
+    currSeq = 0;
+    currSeq2 = 0;
     secuenciaSelec = 2;
-    //inicializamos punteros
-    led = secuencia;
-    ultimo = secuencia[ultimoLed];
-    primero = primerLed;
 }
 
 void loop(){ 
-    
-    currCount = micros();
-    if ((currCount -prevCount) >= interval){
-        if(flag == true ){ //indicamos el encendido y apagado de cada led para la percepción de las secuencias
+   //   printf("currSeq1= %d\n");
+ currCount = micros(); 
+    if ((currCount - prevCount) >= interval) {
+        if (flag) {
             flag = false;
-            apagarLed(); //apagamos leds que no corresponden al estado 
-            //int led = secuencia[currSeq]; //obtenemos un dato a la vez de la secuencia1
-            int led2 = secuencia2[currSeq]; //lo mismo en la secuencia 2
-            //encendemos los leds que corresponden al estado actual
-            encenderLed(*led); 
-            encenderLed(led2);
-            //avanzamos en la estructura de las secuencias
-            if (secuenciaSelec == 2){ //sentido original
-              //currSeq++;
-              led++;
-            } else if (secuenciaSelec == 1){ //sentido inverso
-              //currSeq--;
-              led--;
-            }
+            apagarLed();  // Apaga todos los LEDs antes de encender los correspondientes
+            encenderLed(secuenciaArray1[currSeq]);  // Enciende el LED correspondiente
+            encenderLed(secuenciaArray2[currSeq2]);
             
-        }else{
-           // apagarLed() ; //apagatodos los leds
-        }
-        //controlamos los tiempos en que permanecen encendidos los leds
-        if (tcurr >= ton){
+            // Avanza o retrocede en la secuencia dependiendo de la dirección
+            if (secuenciaSelec == 2) {  // Sentido original
+                currSeq++;
+                currSeq2++;
+            } else if (secuenciaSelec == 1) {  // Sentido inverso
+                currSeq--;
+                currSeq2--;
+            }
+      //Funcion para evitar el desbordamiento
+       currSeq = Curr(currSeq, ultimoLed1, secuenciaSelec);
+       currSeq2 = Curr(currSeq2, ultimoLed2, secuenciaSelec);
+      }
+
+        // Controla los tiempos en que permanecen encendidos los LEDs
+      if (tcurr >= ton) {
             tcurr = 0;
             flag = true;
-        }else{
+      } else {
             tcurr++;
-        }
-        // para en el sentido original, evitar desbordamiento
-        /*if ((currSeq >= ultimoLed)&&(secuenciaSelec == 2)){
-            currSeq = 0;
-        }*/
-        if ((led == &secuencia[ultimoLed])&&(secuenciaSelec == 2)){
-            led = secuencia;
-        }
+      } 
+      // Lee los valores de los pulsantes (simulado)
+      int sw1val = leerTecla(SW1, "SW1");
+      int sw2val = leerTecla(SW2, "SW2");
+      int sw3val = leerTecla(SW3, "SW3");
+      int sw4val = leerTecla(SW4, "SW4");
 
-        // para el sentido inverso, evitar desbordamiento
-        if ((led < &secuencia[0])&&(secuenciaSelec == 1)){
-            led = &secuencia[ultimoLed];
-        }
-        //leemos los valores de los pulsantes
-         sw1val = leerTecla(SW1, "SW1");
-         sw2val = leerTecla(SW2, "SW2");
-         sw3val = leerTecla(SW3, "SW3");
-         sw4val = leerTecla(SW4, "SW4");
-        
-        //prioridad
-        swSelec = prioridad(sw1val,sw2val,sw3val,sw4val);
-
-        switch(swSelec){
-          case 0: // Sentido inverso
-            Serial.println("Pulsante seleccionado SW1");
-            secuenciaSelec = 1;
-
-            break;
-          case 1: //Original
-            Serial.println("Pulsante seleccionado SW2");
-            secuenciaSelec = 2;
-            break;
-          case 2: //200ms
-            Serial.println("Pulsante seleccionado SW3");
-            ton = 20;
-            break;
-          case 3: //750ms
-            Serial.println("Pulsante seleccionado SW4");
-            ton = 75;
-            
-            break;
-          default:
+      // Prioridad de los pulsantes (simulado)
+      int swSelec = prioridad(sw1val, sw2val, sw3val, sw4val);   
+      // Cambia la secuencia según el pulsante seleccionado
+      switch (swSelec) {
+          case 0:  // Sentido inverso
+              Serial.println("Pulsante seleccionado SW1");
+              secuenciaSelec = 1;
               break;
-        }
-        prevCount = currCount; //igualamos el tiempo previo con el actual para seguir con el siguiente intervalo
-         
-    }
-   
+          case 1:  // Sentido original
+              Serial.println("Pulsante seleccionado SW2");
+              secuenciaSelec = 2;
+              break;
+          case 2:  // 200ms
+              Serial.println("Pulsante seleccionado SW3");
+              ton = 20;
+              break;
+           case 3:  // 750ms
+              Serial.println("Pulsante seleccionado SW4");
+              ton = 75;
+               break;
+           default:
+              break;
+      }
+      prevCount = currCount; //igualamos el tiempo previo con el actual para seguir con el siguiente intervalo
+   }
 }
+
