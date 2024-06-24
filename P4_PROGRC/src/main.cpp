@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <stdint.h>
 #include <TimerOne.h>
-
  //Modularización
 extern "C"{
     #include "leds.h"
@@ -47,15 +46,10 @@ int sw4val;
 int swSelec; //Sw seleccionado para evitar el doble accionar de dos o más pulsantes
 int secuenciaSelec; //Se guarda la elección entre el sw1 y sw2 para saber que secuencia mostrar
 //Para el antirebote
-int SWin; //valor del switch ingresa
-int SWout; //valor del switch controlado antirebote
-int bandera; //Se cumplió el estado de transición
 int cont; //Contador para la interrupción
 int Intervalo; //tiempo de tolerancia para confirmar el cambio de estados
-int SWanterior;
 //interrupción
 void timerDelay() {
-  //Serial.print(cont);
   cont++;
 }
 void setup(){
@@ -80,19 +74,13 @@ void setup(){
     currSeq2 = 0;
     secuenciaSelec = 2;
     //Inicialización para antirebote
-    SWin = 0; // 
-    SWout = 0; //
     Intervalo = 50; // En este caso son 50 milisegundos
     cont = 0;
-    bandera = 0;
-    SWanterior=0;
-  
     Timer1.initialize(1000); // Configura el timer para 1000 microsegundos es igual a 1 milisegundo
                            // Para que sea visual se puede probar con 5 segundos, reemplazar 1000000
     Timer1.attachInterrupt(timerDelay); // Asocia la interrupción a la función retencion
 }
 void loop(){ 
-   //   printf("currSeq1= %d\n");
  currCount = micros(); 
     if ((currCount - prevCount) >= interval) {
         if (flag) {
@@ -100,7 +88,6 @@ void loop(){
             apagarLed();  // Apaga todos los LEDs antes de encender los correspondientes
             encenderLed(secuenciaArray1[currSeq]);  // Enciende el LED correspondiente
             encenderLed(secuenciaArray2[currSeq2]);
-            
             // Avanza o retrocede en la secuencia dependiendo de la dirección
             if (secuenciaSelec == 2) {  // Sentido original
                 currSeq++;
@@ -125,11 +112,6 @@ void loop(){
       int sw2val = leerTecla(SW2, "SW2", Intervalo, cont);
       int sw3val = leerTecla(SW3, "SW3", Intervalo, cont);
       int sw4val = leerTecla(SW4, "SW4", Intervalo, cont);
-
-
-
-
-
       // Prioridad de los pulsantes (simulado)
       int swSelec = prioridad(sw1val, sw2val, sw3val, sw4val);   
       // Cambia la secuencia según el pulsante seleccionado

@@ -14,3 +14,4 @@ int Curr(int CurrSequence, uint8_t ultimaPosicion,int secuenciaSeleccionada){
       
   return CurrSequence;
 }
+
